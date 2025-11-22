@@ -40,7 +40,7 @@ jobs:
 
       - name: Terraform lint
         run: |
-          cd infra/
+          cd Infra/
           docker compose run --rm terraform -chdir=deploy/ init -backend=false
           docker compose run --rm terraform -chdir=setup/ init -backend=false
           docker compose run --rm terraform -chdir=setup/ validate
