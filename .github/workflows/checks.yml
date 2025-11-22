@@ -1,6 +1,9 @@
 name: Checks
 
+# Trigger automatically on push and PR targeting main
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
