@@ -41,7 +41,7 @@ jobs:
 
       - name: Debug Secrets
         run: |
-          echo "DOCKERHUB_USER=${{ vars.DOCKERHUB_USER }}"
+          echo "DOCKERHUB_USER=${{ secrets.DOCKERHUB_USER }}"
           echo "DOCKERHUB_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}"
 
       - name: Login to Docker Hub
