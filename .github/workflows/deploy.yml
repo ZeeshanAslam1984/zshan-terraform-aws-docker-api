@@ -32,7 +32,7 @@ jobs:
 
       - name: Debug ECR variables
         run: |
-          echo "AWS_ACCOUNT_ID=${{ vars.AWS_ACCOUNT_ID }}"
+          echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}"
           echo "ECR_REPO_APP=${{ vars.ECR_REPO_APP }}"
           echo "ECR_REPO_PROXY=${{ vars.ECR_REPO_PROXY }}"
           echo "GITHUB_SHA=$GITHUB_SHA"
@@ -44,7 +44,7 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
         run: |
           echo "Logging into ECR..."
-          aws ecr get-login-password --region $AWS_DEFAULT_REGION | tr -d '\r' | docker login --username AWS --password-stdin ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION | tr -d '\r' | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
 
       - name: Build and Push App Image
         run: |
