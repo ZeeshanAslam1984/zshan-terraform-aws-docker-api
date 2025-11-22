@@ -28,6 +28,7 @@ jobs:
             echo "prod" > .workspace
           else
             echo "staging" > .workspace
+          fi
 
       - name: Push to ECR
         env:
