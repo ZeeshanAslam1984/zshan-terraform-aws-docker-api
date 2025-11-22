@@ -8,5 +8,10 @@ jobs:
   test-lint:
     uses: ./.github/workflows/test-and-lint.yml
     secrets:
+test-pr
       DOCKERHUB_USER: ${{ secrets.DOCKER_USERNAME }}  # maps to your actual secret
       DOCKERHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}    # maps to your actual secret
+      DOCKERHUB_USER: ${{ secrets.DOCKER_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  
+ main
