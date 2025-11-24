@@ -1,7 +1,11 @@
+<HEAD
  HEAD
 Hello Zeeshan
 
 # devops-recepe-app-api
+
+# devops-recipe-app-api
+91a163bf76c761750c175988a046e4aa8ff74544
 
 
 
@@ -18,14 +22,22 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
+HEAD
 git remote add origin https://gitlab.com/zesh1984/devops-recepe-app-api.git
+
+git remote add origin https://gitlab.com/zesh1984/devops-recipe-app-api.git
+91a163bf76c761750c175988a046e4aa8ff74544
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
+HEAD
 - [ ] [Set up project integrations](https://gitlab.com/zesh1984/devops-recepe-app-api/-/settings/integrations)
+
+- [ ] [Set up project integrations](https://gitlab.com/zesh1984/devops-recipe-app-api/-/settings/integrations)
+91a163bf76c761750c175988a046e4aa8ff74544
 
 ## Collaborate with your team
 
@@ -94,4 +106,7 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+HEAD
 e4c7a4bb919a0d3781f1548d3d5454d883195ff5
+
+91a163bf76c761750c175988a046e4aa8ff74544
