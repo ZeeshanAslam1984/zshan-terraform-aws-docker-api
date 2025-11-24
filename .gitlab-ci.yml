@@ -13,7 +13,10 @@ stages:
   - Test and Lint
   - Build and Push
   - Deploy
+ .gitlab-ci.yml
   - Destroy
+
+ .gitlab-ci.yml
 
 Python Check:
   stage: Test and Lint
@@ -65,6 +68,7 @@ Deploy:
     - docker compose run --rm terraform -chdir=deploy/ apply -auto-approve
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /main|prod/'
+      .gitlab-ci.yml
 
 Destroy:
   stage: Destroy
@@ -82,3 +86,5 @@ Destroy:
   rules:
     - if: "$CI_COMMIT_BRANCH =~ /{main|prod} $/"
       when: manual 
+
+      .gitlab-ci.yml
