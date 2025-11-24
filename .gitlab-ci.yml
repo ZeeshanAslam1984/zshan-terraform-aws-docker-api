@@ -1,3 +1,5 @@
+---
+
 image:
   name: docker:24.0
 
@@ -5,10 +7,12 @@ services:
   - docker:24.0-dind
 
 before_script:
-  - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+  - echo "DOCKERHUB_TOKEN" | docker login -username $DOCKERHUB_USER --password-stdin
 
 stages:
   - Test and Lint
+  - Build and Push
+  - Deploy
 
 Python Check:
   stage: Test and Lint
@@ -16,7 +20,7 @@ Python Check:
     - docker compose run --rm app sh -c "python manage.py wait_for_db && python manage.py test"
     - docker compose run --rm app sh -c "flake8"
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "prod"'
+    - if "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^{main|prod}$/ || $CI_COMMIT_BRANCH =~ /^{main|prod}$/"
 
 Terraform Check:
   stage: Test and Lint
@@ -28,5 +32,41 @@ Terraform Check:
     - docker compose run --rm terraform -chdir=setup/ fmt -check
     - docker compose run --rm terraform -chdir=deploy/ validate
     - docker compose run --rm terraform -chdir=deploy/ fmt -check
+
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "prod"'
+    - if "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^{main|prod}$/ || $CI_COMMIT_BRANCH =~ /^{main|prod}$/"
+
+Push to ECR:
+  stage: Build and Push
+  script:
+    - apk update && apk add aws-cli
+    - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+    - docker build --compress -t $ECR_REPO_APP:$CI_COMMIT_SHA .
+    - docker push $ECR_REPO_APP:$CI_COMMIT_SHA
+    - docker build --compress -t $ECR_REPO_PROXY:$CI_COMMIT_SHA proxy/
+    - docker push $ECR_REPO_PROXY:$CI_COMMIT_SHA
+  rules:
+    - if "$CI_COMMIT_BRANCH =~ /^{main|prod}$/"
+
+Deploy:
+  stage: Deploy
+  script:
+    - |
+      If [{$CICOMMIT_BRANCH == 'prod' }]; then 
+        workspace="prod"
+      else 
+        workspace="staging"
+      fi
+    - export TF_VAR-ecr_app_image="$ECR_REPO_APP:$CI_COMMIT_SHA"
+    - export TF_VAR-ecr_proxy_image="$ECR_REPO_PROXY:$CI_COMMIT_SHA"
+    - cd Infra
+    - docker compose run --rm terraform -chdir=deploy/ init
+    - docker compose run --rm terraform -chdir=deploy/ workspace select $workspace 
+    - docker compose run --rm terraform -chdir=deploy/ apply -auto-approve
+
+  rules:
+    - if "$CI_COMMIT_BRANCH =~ /^{main|prod}$/"
+
+    
+
+    
