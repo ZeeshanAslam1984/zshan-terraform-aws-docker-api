@@ -40,6 +40,18 @@ services:
       - static-data:/vol/static
       - media-data:/vol/media
 
+  terraform:
+    image: hashicorp/terraform:1.6.2
+    working_dir: /tf
+    volumes:
+      - ./Infra/setup:/tf/setup
+      - ./Infra/deploy:/tf/deploy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - TF_WORKSPACE=${TF_WORKSPACE}
+
 volumes:
   postgres-data:
   static-data:
