@@ -66,8 +66,9 @@ jobs:
 
       - name: Deploy Terraform
         run: |
-          docker compose run --rm terraform -chdir=deploy init
-          docker compose run --rm terraform -chdir=deploy apply -auto-approve
+          docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy init
+          docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy apply -auto-approve
+
 
 
 
