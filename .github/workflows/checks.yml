@@ -54,6 +54,10 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
       TF_WORKSPACE: ${{ secrets.TF_WORKSPACE }}
+      TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+      TF_VAR_django_secret_key: ${{ secrets.TF_VAR_DJANGO_SECRET_KEY }}
+      TF_VAR_ecr_proxy_image: ${{ secrets.ECR_REPO_PROXY }}
+      TF_VAR_ecr_app_image: ${{ secrets.ECR_REPO_APP }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,6 +72,7 @@ jobs:
         run: |
           docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy init
           docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy apply -auto-approve
+
 
 
 
