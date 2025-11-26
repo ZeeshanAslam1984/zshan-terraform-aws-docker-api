@@ -10,3 +10,4 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
       - TF_WORKSPACE=${TF_WORKSPACE}
+      - TF_VAR_db_password=${TF_VAR_db_password}
