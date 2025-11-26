@@ -10,7 +10,7 @@ variable "project" {
 
 variable "contact" {
   description = "Contact email for tagging resources"
-  default     = "mark@example.com"
+  default     = "zesh@example.com"
 }
 
 variable "db_username" {
@@ -20,4 +20,9 @@ variable "db_username" {
 
 variable "db_password" {
   description = "Password for the Terraform database"
+}
+
+variable "ecr_proxy_image" {
+  description = "Path to the ECR repo with the proxy image"
+
 }
