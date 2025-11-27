@@ -1,7 +1,11 @@
 #!/bin/sh
 
-# Replace variables in template
-envsubst '$LISTEN_PORT $APP_HOST $APP_PORT' < /etc/nginx/default.conf.tpl > /etc/nginx/conf.d/default.conf
+# Wait for the Django app to start on localhost:8000
+echo "Waiting for Django app to start..."
+while ! nc -z 127.0.0.1 8000; do
+  sleep 1
+done
+echo "Django app is up, starting Nginx..."
 
 # Start Nginx in foreground
 nginx -g 'daemon off;'
