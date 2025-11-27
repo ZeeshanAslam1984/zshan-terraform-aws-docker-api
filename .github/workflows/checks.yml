@@ -72,15 +72,12 @@ jobs:
         env:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         run: |
-          aws ecr get-login-password --region $AWS_DEFAULT_REGION | \
-          docker login --username AWS --password-stdin 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
-            - name: Create ECR Repository if not exists
-              run: |
-                aws ecr describe-repositories --repository-names recipe-app-api-app || \
-                aws ecr create-repository --repository-name recipe-app-api-app
-                aws ecr describe-repositories --repository-names recipe-app-api-proxy || \
-                aws ecr create-repository --repository-name recipe-app-api-proxy
+      - name: Create ECR Repositories if not exist
+        run: |
+          aws ecr describe-repositories --repository-names recipe-app-api-app || aws ecr create-repository --repository-name recipe-app-api-app
+          aws ecr describe-repositories --repository-names recipe-app-api-proxy || aws ecr create-repository --repository-name recipe-app-api-proxy
 
       - name: Build and Push Docker Images to ECR
         run: |
@@ -96,10 +93,3 @@ jobs:
         run: |
           docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy init
           docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy apply -auto-approve
-
-
-
-
-
-
-
