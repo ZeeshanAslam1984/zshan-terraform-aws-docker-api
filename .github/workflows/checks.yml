@@ -82,20 +82,20 @@ jobs:
                 aws ecr describe-repositories --repository-names recipe-app-api-proxy || \
                 aws ecr create-repository --repository-name recipe-app-api-proxy
 
-            - name: Build and Push Docker Images to ECR
-              run: |
-                docker build -t recipe-app-api-app .
-                docker tag recipe-app-api-app:latest 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-app:latest
-                docker push 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-app:latest
+      - name: Build and Push Docker Images to ECR
+        run: |
+          docker build -t recipe-app-api-app .
+          docker tag recipe-app-api-app:latest 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-app:latest
+          docker push 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-app:latest
 
-                docker build -t recipe-app-api-proxy ./proxy
-                docker tag recipe-app-api-proxy:latest 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-proxy:latest
-                docker push 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-proxy:latest
+          docker build -t recipe-app-api-proxy ./proxy
+          docker tag recipe-app-api-proxy:latest 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-proxy:latest
+          docker push 898949652444.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/recipe-app-api-proxy:latest
 
-            - name: Deploy Terraform
-              run: |
-                docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy init
-                docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy apply -auto-approve
+      - name: Deploy Terraform
+        run: |
+          docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy init
+          docker compose -f docker-compose-deploy.yml run --rm terraform -chdir=deploy apply -auto-approve
 
 
 
