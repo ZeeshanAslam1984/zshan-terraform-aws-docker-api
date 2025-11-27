@@ -2,6 +2,7 @@
 # ECS Cluster for running app on Fargate.
 ##
 
+# IAM policy for ECS task execution
 resource "aws_iam_policy" "task_execution_role_policy" {
   name        = "${local.prefix}-task-exec-role-policy"
   path        = "/"
@@ -9,21 +10,25 @@ resource "aws_iam_policy" "task_execution_role_policy" {
   policy      = file("./templates/ecs/task-execution-role-policy.json")
 }
 
+# IAM role for ECS task execution
 resource "aws_iam_role" "task_execution_role" {
   name               = "${local.prefix}-task-execution-role"
   assume_role_policy = file("./templates/ecs/task-assume-role-policy.json")
 }
 
+# Attach execution policy
 resource "aws_iam_role_policy_attachment" "task_execution_role" {
   role       = aws_iam_role.task_execution_role.name
   policy_arn = aws_iam_policy.task_execution_role_policy.arn
 }
 
+# IAM role for app task
 resource "aws_iam_role" "app_task" {
   name               = "${local.prefix}-app-task"
   assume_role_policy = file("./templates/ecs/task-assume-role-policy.json")
 }
 
+# SSM policy for ECS task
 resource "aws_iam_policy" "task_ssm_policy" {
   name        = "${local.prefix}-task-ssm-role-policy"
   path        = "/"
@@ -31,18 +36,23 @@ resource "aws_iam_policy" "task_ssm_policy" {
   policy      = file("./templates/ecs/task-ssm-policy.json")
 }
 
+# Attach SSM policy
 resource "aws_iam_role_policy_attachment" "task_ssm_policy" {
   role       = aws_iam_role.app_task.name
   policy_arn = aws_iam_policy.task_ssm_policy.arn
 }
 
+# CloudWatch log group for ECS
 resource "aws_cloudwatch_log_group" "ecs_task_logs" {
   name = "${local.prefix}-api"
 }
+
+# ECS cluster
 resource "aws_ecs_cluster" "main" {
   name = "${local.prefix}-cluster"
 }
 
+# ECS task definition
 resource "aws_ecs_task_definition" "api" {
   family                   = "${local.prefix}-api"
   requires_compatibilities = ["FARGATE"]
@@ -61,30 +71,12 @@ resource "aws_ecs_task_definition" "api" {
       user              = "django-user"
 
       environment = [
-        {
-          name  = "DJANGO_SECRET_KEY"
-          value = var.django_secret_key
-        },
-        {
-          name  = "DB_HOST"
-          value = aws_db_instance.main.address
-        },
-        {
-          name  = "DB_NAME"
-          value = aws_db_instance.main.db_name
-        },
-        {
-          name  = "DB_USER"
-          value = aws_db_instance.main.username
-        },
-        {
-          name  = "DB_PASS"
-          value = aws_db_instance.main.password
-        },
-        {
-          name  = "ALLOWED_HOSTS"
-          value = "*"
-        }
+        { name = "DJANGO_SECRET_KEY", value = var.django_secret_key },
+        { name = "DB_HOST", value = aws_db_instance.main.address },
+        { name = "DB_NAME", value = aws_db_instance.main.db_name },
+        { name = "DB_USER", value = aws_db_instance.main.username },
+        { name = "DB_PASS", value = aws_db_instance.main.password },
+        { name = "ALLOWED_HOSTS", value = "*" }
       ]
 
       mountPoints = [
@@ -104,7 +96,6 @@ resource "aws_ecs_task_definition" "api" {
         }
       }
     },
-
     {
       name              = "proxy"
       image             = var.ecr_proxy_image
@@ -113,17 +104,11 @@ resource "aws_ecs_task_definition" "api" {
       user              = "nginx"
 
       portMappings = [
-        {
-          containerPort = 8000
-          hostPort      = 8000
-        }
+        { containerPort = 8000, hostPort = 8000 }
       ]
 
       environment = [
-        {
-          name  = "APP_HOST"
-          value = "127.0.0.1"
-        }
+        { name = "APP_HOST", value = "127.0.0.1" }
       ]
 
       mountPoints = [
@@ -145,21 +130,29 @@ resource "aws_ecs_task_definition" "api" {
     }
   ])
 
+  # Updated volume for Fargate
   volume {
     name = "static"
+    docker_volume_configuration {
+      scope         = "task"
+      autoprovision = true
+      driver        = "local"
+    }
   }
+
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = "X86_64"
   }
 }
 
+# Security group for ECS service
 resource "aws_security_group" "ecs_service" {
   description = "Access rules for the ECS service."
   name        = "${local.prefix}-ecs-service"
   vpc_id      = aws_vpc.main.id
 
-  # Outbound access to endpoints
+  # Outbound HTTPS
   egress {
     from_port   = 443
     to_port     = 443
@@ -167,7 +160,7 @@ resource "aws_security_group" "ecs_service" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # RDS connectivity
+  # Outbound RDS connectivity
   egress {
     from_port = 5432
     to_port   = 5432
@@ -178,7 +171,7 @@ resource "aws_security_group" "ecs_service" {
     ]
   }
 
-  # HTTP inbound access
+  # Inbound HTTP for app
   ingress {
     from_port   = 8000
     to_port     = 8000
@@ -187,10 +180,11 @@ resource "aws_security_group" "ecs_service" {
   }
 }
 
+# ECS service
 resource "aws_ecs_service" "api" {
   name                   = "${local.prefix}-api"
   cluster                = aws_ecs_cluster.main.name
-  task_definition        = aws_ecs_task_definition.api.family
+  task_definition        = aws_ecs_task_definition.api.arn
   desired_count          = 1
   launch_type            = "FARGATE"
   platform_version       = "1.4.0"
@@ -198,12 +192,10 @@ resource "aws_ecs_service" "api" {
 
   network_configuration {
     assign_public_ip = true
-
     subnets = [
       aws_subnet.public_a.id,
       aws_subnet.public_b.id
     ]
-
     security_groups = [aws_security_group.ecs_service.id]
   }
 }
