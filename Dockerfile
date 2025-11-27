@@ -41,5 +41,5 @@ USER django-user
 VOLUME /vol/web/media
 VOLUME /vol/web/static
 
-CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8001"]
+CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"]
 
