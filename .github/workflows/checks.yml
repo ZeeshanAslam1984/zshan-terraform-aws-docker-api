@@ -54,6 +54,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
       TF_WORKSPACE: ${{ secrets.TF_WORKSPACE }}
+      TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+      TF_VAR_DJANGO_SECRET_KEY: ${{ secrets.TF_VAR_DJANGO_SECRET_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
