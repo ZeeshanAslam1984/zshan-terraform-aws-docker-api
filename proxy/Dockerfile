@@ -9,7 +9,7 @@ COPY ./run.sh /run.sh
 # Environment variables
 ENV LISTEN_PORT=8000
 ENV APP_HOST=app
-ENV APP_PORT=8000   
+ENV APP_PORT=8001  
 
 USER root
 
