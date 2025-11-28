@@ -34,7 +34,7 @@ server {
         return 200 'OK';
         add_header Content-Type text/plain;
     }
-
+    
     # Optional: logging
     access_log /var/log/nginx/access.log;
     error_log /var/log/nginx/error.log warn;
