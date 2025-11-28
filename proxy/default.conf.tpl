@@ -7,7 +7,7 @@ server {
     }
 
     location /media/ {
-        alias /vol/media/;
+        alias /vol/web/media/;
     }
 
     # Proxy to Django app
