@@ -31,6 +31,12 @@ resource "aws_iam_policy" "task_ssm_policy" {
   policy      = file("./templates/ecs/task-ssm-policy.json")
 }
 
+resource "aws_iam_role_policy_attachment" "task_exec_ssm" {
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+
 resource "aws_iam_role_policy_attachment" "task_ssm_policy" {
   role       = aws_iam_role.app_task.name
   policy_arn = aws_iam_policy.task_ssm_policy.arn
