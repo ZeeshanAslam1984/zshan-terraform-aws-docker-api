@@ -6,14 +6,14 @@ server {
         alias /vol/static/;
     }
 
-    location static/web/media/ {
-        alias /vol/web/media;
+    location /static/web/media/ {
+        alias /vol/web/media/;
     }
 
     location / {
         proxy_pass http://127.0.0.1:8000;  # django app
     }
-    
+
     # Proxy to Django app
     location / {
         include /etc/nginx/gunicorn_headers;
