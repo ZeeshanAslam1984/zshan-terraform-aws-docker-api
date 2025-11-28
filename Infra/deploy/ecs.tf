@@ -119,20 +119,20 @@ resource "aws_ecs_task_definition" "api" {
         }
       ]
 
-     environment = [
+      environment = [
         {
-            name  = "APP_HOST"
-            value = "127.0.0.1"
+          name  = "APP_HOST"
+          value = "127.0.0.1"
         },
         {
-            name  = "APP_PORT"
-            value = "8000"
+          name  = "APP_PORT"
+          value = "8000"
         },
         {
-            name  = "LISTEN_PORT"
-            value = "8000"
+          name  = "LISTEN_PORT"
+          value = "8000"
         }
-        ]
+      ]
 
       mountPoints = [
         {
