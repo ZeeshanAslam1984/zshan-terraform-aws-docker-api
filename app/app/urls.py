@@ -16,8 +16,12 @@ from core import views as core_views
 
 
 urlpatterns = [
-    # FIX: Add a homepage route to redirect to the API docs
-    path('', RedirectView.as_view(url='/api/docs/'), name='home'),
+    # Fixed E501: Wrapped the long line for compliance
+    path(
+        '',
+        RedirectView.as_view(url='/api/docs/'),
+        name='home'
+    ),
 
     path('admin/', admin.site.urls),
     path('api/health-check/', core_views.health_check, name='health-check'),
@@ -28,7 +32,7 @@ urlpatterns = [
         name='api-docs',
     ),
     path('api/user/', include('user.urls')),
-    path('api/recipe/', include('recipe.urls')), # Line 36: Trailing whitespace removed here
+    path('api/recipe/', include('recipe.urls')),
 ]
 
 # This block serves static/media files only in development mode (DEBUG=True).
