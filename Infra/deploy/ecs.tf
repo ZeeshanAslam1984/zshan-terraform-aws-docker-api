@@ -1,8 +1,7 @@
-############################
-# ECS + Fargate + EFS Setup
-############################
+##
+# ECS Cluster for running app on Fargate.
+##
 
-# IAM roles
 resource "aws_iam_policy" "task_execution_role_policy" {
   name        = "${local.prefix}-task-exec-role-policy"
   path        = "/"
@@ -42,45 +41,14 @@ resource "aws_iam_role_policy_attachment" "task_ssm_policy" {
   policy_arn = aws_iam_policy.task_ssm_policy.arn
 }
 
-# CloudWatch Logs
 resource "aws_cloudwatch_log_group" "ecs_task_logs" {
   name = "${local.prefix}-api"
 }
 
-# ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = "${local.prefix}-cluster"
 }
 
-# EFS File System
-resource "aws_efs_file_system" "media" {
-  creation_token = "${local.prefix}-efs"
-  lifecycle_policy {
-    transition_to_ia = "AFTER_30_DAYS"
-  }
-  encrypted = true
-}
-
-# EFS Access Point
-resource "aws_efs_access_point" "media" {
-  file_system_id = aws_efs_file_system.media.id
-
-  posix_user {
-    uid = 1000
-    gid = 1000
-  }
-
-  root_directory {
-    path = "/media"
-    creation_info {
-      owner_uid   = 1000
-      owner_gid   = 1000
-      permissions = "755"
-    }
-  }
-}
-
-# ECS Task Definition
 resource "aws_ecs_task_definition" "api" {
   family                   = "${local.prefix}-api"
   requires_compatibilities = ["FARGATE"]
@@ -108,8 +76,16 @@ resource "aws_ecs_task_definition" "api" {
       ]
 
       mountPoints = [
-        { containerPath = "/vol/web/static", sourceVolume = "static", readOnly = false },
-        { containerPath = "/vol/web/media", sourceVolume = "efs-media", readOnly = false }
+        {
+          readOnly      = false
+          containerPath = "/vol/web/static"
+          sourceVolume  = "static"
+        },
+        {
+          readOnly      = false
+          containerPath = "/vol/web/media"
+          sourceVolume  = "efs-media"
+        }
       ]
 
       logConfiguration = {
@@ -121,6 +97,7 @@ resource "aws_ecs_task_definition" "api" {
         }
       }
     },
+
     {
       name              = "proxy"
       image             = var.ecr_proxy_image
@@ -139,8 +116,16 @@ resource "aws_ecs_task_definition" "api" {
       ]
 
       mountPoints = [
-        { containerPath = "/vol/web/static", sourceVolume = "static", readOnly = false },
-        { containerPath = "/vol/web/media", sourceVolume = "efs-media", readOnly = false }
+        {
+          readOnly      = false
+          containerPath = "/vol/web/static"
+          sourceVolume  = "static"
+        },
+        {
+          readOnly      = false
+          containerPath = "/vol/web/media"
+          sourceVolume  = "efs-media"
+        }
       ]
 
       logConfiguration = {
@@ -154,6 +139,7 @@ resource "aws_ecs_task_definition" "api" {
     }
   ])
 
+  # Volumes
   volume {
     name = "static"
   }
@@ -163,7 +149,6 @@ resource "aws_ecs_task_definition" "api" {
     efs_volume_configuration {
       file_system_id     = aws_efs_file_system.media.id
       transit_encryption = "ENABLED"
-
       authorization_config {
         access_point_id = aws_efs_access_point.media.id
         iam             = "DISABLED"
@@ -177,7 +162,6 @@ resource "aws_ecs_task_definition" "api" {
   }
 }
 
-# ECS Security Group
 resource "aws_security_group" "ecs_service" {
   description = "Access rules for the ECS service."
   name        = "${local.prefix}-ecs-service"
@@ -194,14 +178,20 @@ resource "aws_security_group" "ecs_service" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = [aws_subnet.private_a.cidr_block, aws_subnet.private_b.cidr_block]
+    cidr_blocks = [
+      aws_subnet.private_a.cidr_block,
+      aws_subnet.private_b.cidr_block
+    ]
   }
 
   egress {
     from_port   = 2049
     to_port     = 2049
     protocol    = "tcp"
-    cidr_blocks = [aws_subnet.private_a.cidr_block, aws_subnet.private_b.cidr_block]
+    cidr_blocks = [
+      aws_subnet.private_a.cidr_block,
+      aws_subnet.private_b.cidr_block
+    ]
   }
 
   ingress {
@@ -212,7 +202,6 @@ resource "aws_security_group" "ecs_service" {
   }
 }
 
-# ECS Service
 resource "aws_ecs_service" "api" {
   name                   = "${local.prefix}-api"
   cluster                = aws_ecs_cluster.main.name
