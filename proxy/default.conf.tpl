@@ -14,7 +14,7 @@ server {
     location / {
         include /etc/nginx/gunicorn_headers;
 
-        proxy_pass http://${APP_HOSTS}:${APP_PORT};
+        proxy_pass http://${APP_HOST}:${APP_PORT};
         proxy_redirect off;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
