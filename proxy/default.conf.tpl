@@ -1,20 +1,20 @@
 server {
-    listen 8000;
+    listen ${LISTEN_PORT};
 
     # Static files
-    location /media/ {
-        alias /vol/web/media/;
+    location /static/static {
+        alias /vol/static/;
     }
 
-    location /static/ {
-        alias /vol/static/;
+    location /static/media {
+        alias /vol/media/;
     }
 
     # Proxy to Django app
     location / {
         include /etc/nginx/gunicorn_headers;
 
-        proxy_pass http://api:8000;
+        proxy_pass http://${APP_HOSTS}:${APP_PORT};
         proxy_redirect off;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
