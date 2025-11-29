@@ -1,5 +1,5 @@
 ##########################
-#   EFS FOR MEDIA        #
+#   EFS FOR MEDIA        #
 ##########################
 
 resource "aws_efs_file_system" "media" {
@@ -40,13 +40,22 @@ resource "aws_efs_mount_target" "media_b" {
 resource "aws_efs_access_point" "media" {
   file_system_id = aws_efs_file_system.media.id
 
+  # ADDED: Explicitly set the POSIX user for the Access Point (best practice)
+  posix_user {
+    uid = 1000
+    gid = 1000
+  }
+
   root_directory {
     path = "/media"
 
     creation_info {
       owner_uid   = 1000
       owner_gid   = 1000
-      permissions = "755"
+      # ✅ FIX: Changed from "755" to "0775"
+      # This grants the Owner (7) and Group (7) Write permissions, 
+      # allowing the 'django-user' to save files to the volume.
+      permissions = "0775"
     }
   }
 }
