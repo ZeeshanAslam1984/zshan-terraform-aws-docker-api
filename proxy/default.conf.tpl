@@ -1,7 +1,6 @@
 server {
     listen ${LISTEN_PORT};
 
-    # Static files
     location /static/static {
         alias /vol/web/static;
     }
@@ -10,7 +9,6 @@ server {
         alias /vol/web/media;
     }
 
-    # Proxy to Django app
     location / {
         include /etc/nginx/gunicorn_headers;
 
@@ -28,13 +26,11 @@ server {
         client_max_body_size 10M;
     }
 
-    # Health check
     location /health/ {
         return 200 'OK';
         add_header Content-Type text/plain;
     }
 
-    # Logging
     access_log /var/log/nginx/access.log;
-    error_log /var/log/nginx/error.log warn;
+    error_log  /var/log/nginx/error.log warn;
 }
