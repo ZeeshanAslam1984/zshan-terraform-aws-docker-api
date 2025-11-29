@@ -6,7 +6,7 @@ server {
         alias /vol/static/;
     }
 
-    location /static/media {
+    location /static/media/ {
         alias /vol/media/;
     }
 
