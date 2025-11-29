@@ -1,17 +1,6 @@
 """app URL Configuration
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+The `urlpatterns` list routes URLs to views.
 """
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -22,11 +11,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
+# ADDED: Import RedirectView
+from django.views.generic.base import RedirectView
 
 from core import views as core_views
 
 
 urlpatterns = [
+    # ADDED: This path redirects the root URL to the API docs
+    path('', RedirectView.as_view(url='/api/docs/'), name='home'),
+
     path('admin/', admin.site.urls),
     path('api/health-check/', core_views.health_check, name='health-check'),
     path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
@@ -39,8 +33,16 @@ urlpatterns = [
     path('api/recipe/', include('recipe.urls')),
 ]
 
+# This configuration allows static/media files to be served 
+# by Django directly when you are running in Development mode (DEBUG=True).
+# In Production (ECS), Nginx handles this.
 if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT,
+    )
+    # It is also good practice to add STATIC support here for local dev
+    urlpatterns += static(
+        settings.STATIC_URL,
+        document_root=settings.STATIC_ROOT,
     )

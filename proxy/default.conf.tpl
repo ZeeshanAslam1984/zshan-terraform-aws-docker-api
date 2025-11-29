@@ -1,12 +1,14 @@
 server {
     listen ${LISTEN_PORT};
 
-    location /static/static {
-        alias /vol/web/static;
+    # UPDATED: Matches STATIC_URL = '/static/' in settings.py
+    location /static/ {
+        alias /vol/web/static/;
     }
 
-    location /static/media/ {
-        alias /vol/web/media;
+    # UPDATED: Matches MEDIA_URL = '/media/' in settings.py
+    location /media/ {
+        alias /vol/web/media/;
     }
 
     location / {
@@ -33,4 +35,4 @@ server {
 
     access_log /var/log/nginx/access.log;
     error_log  /var/log/nginx/error.log warn;
-}
+}d
