@@ -1,7 +1,8 @@
-##
-# ECS Cluster for running app on Fargate.
-##
+############################
+# ECS + Fargate + EFS Setup
+############################
 
+# IAM roles
 resource "aws_iam_policy" "task_execution_role_policy" {
   name        = "${local.prefix}-task-exec-role-policy"
   path        = "/"
@@ -36,19 +37,50 @@ resource "aws_iam_role_policy_attachment" "task_exec_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-
 resource "aws_iam_role_policy_attachment" "task_ssm_policy" {
   role       = aws_iam_role.app_task.name
   policy_arn = aws_iam_policy.task_ssm_policy.arn
 }
 
+# CloudWatch Logs
 resource "aws_cloudwatch_log_group" "ecs_task_logs" {
   name = "${local.prefix}-api"
 }
+
+# ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = "${local.prefix}-cluster"
 }
 
+# EFS File System
+resource "aws_efs_file_system" "media" {
+  creation_token = "${local.prefix}-efs"
+  lifecycle_policy {
+    transition_to_ia = "AFTER_30_DAYS"
+  }
+  encrypted = true
+}
+
+# EFS Access Point
+resource "aws_efs_access_point" "media" {
+  file_system_id = aws_efs_file_system.media.id
+
+  posix_user {
+    uid = 1000
+    gid = 1000
+  }
+
+  root_directory {
+    path = "/media"
+    creation_info {
+      owner_uid   = 1000
+      owner_gid   = 1000
+      permissions = "755"
+    }
+  }
+}
+
+# ECS Task Definition
 resource "aws_ecs_task_definition" "api" {
   family                   = "${local.prefix}-api"
   requires_compatibilities = ["FARGATE"]
@@ -67,45 +99,17 @@ resource "aws_ecs_task_definition" "api" {
       user              = "django-user"
 
       environment = [
-        {
-          name  = "DJANGO_SECRET_KEY"
-          value = var.django_secret_key
-        },
-        {
-          name  = "DB_HOST"
-          value = aws_db_instance.main.address
-        },
-        {
-          name  = "DB_NAME"
-          value = aws_db_instance.main.db_name
-        },
-        {
-          name  = "DB_USER"
-          value = aws_db_instance.main.username
-        },
-        {
-          name  = "DB_PASS"
-          value = aws_db_instance.main.password
-        },
-        {
-          name  = "ALLOWED_HOSTS"
-          value = "*"
-        }
+        { name = "DJANGO_SECRET_KEY", value = var.django_secret_key },
+        { name = "DB_HOST", value = aws_db_instance.main.address },
+        { name = "DB_NAME", value = aws_db_instance.main.db_name },
+        { name = "DB_USER", value = aws_db_instance.main.username },
+        { name = "DB_PASS", value = aws_db_instance.main.password },
+        { name = "ALLOWED_HOSTS", value = "*" }
       ]
 
       mountPoints = [
-        {
-          readOnly      = false
-          containerPath = "/vol/web/static"
-          sourceVolume  = "static"
-        },
-        {
-          readOnly      = false
-          containerPath = "/vol/web/media"
-          sourceVolume  = "efs-media"
-
-        }
-
+        { containerPath = "/vol/web/static", sourceVolume = "static", readOnly = false },
+        { containerPath = "/vol/web/media", sourceVolume = "efs-media", readOnly = false }
       ]
 
       logConfiguration = {
@@ -117,7 +121,6 @@ resource "aws_ecs_task_definition" "api" {
         }
       }
     },
-
     {
       name              = "proxy"
       image             = var.ecr_proxy_image
@@ -126,41 +129,18 @@ resource "aws_ecs_task_definition" "api" {
       user              = "nginx"
 
       portMappings = [
-        {
-          containerPort = 8000
-          hostPort      = 8000
-        }
+        { containerPort = 8000, hostPort = 8000 }
       ]
 
       environment = [
-        {
-          name  = "APP_HOST"
-          value = "api"
-        },
-        {
-          name  = "APP_PORT"
-          value = "8000"
-        },
-        {
-          name  = "LISTEN_PORT"
-          value = "8000"
-        }
+        { name = "APP_HOST", value = "api" },
+        { name = "APP_PORT", value = "8000" },
+        { name = "LISTEN_PORT", value = "8000" }
       ]
 
       mountPoints = [
-        {
-          readOnly      = false
-          containerPath = "/vol/web/static"
-          sourceVolume  = "static"
-        },
-        {
-          readOnly      = false
-          containerPath = "/vol/web/media"
-          sourceVolume  = "efs-media"
-
-        }
-
-
+        { containerPath = "/vol/web/static", sourceVolume = "static", readOnly = false },
+        { containerPath = "/vol/web/media", sourceVolume = "efs-media", readOnly = false }
       ]
 
       logConfiguration = {
@@ -197,12 +177,12 @@ resource "aws_ecs_task_definition" "api" {
   }
 }
 
+# ECS Security Group
 resource "aws_security_group" "ecs_service" {
   description = "Access rules for the ECS service."
   name        = "${local.prefix}-ecs-service"
   vpc_id      = aws_vpc.main.id
 
-  # Outbound access to endpoints
   egress {
     from_port   = 443
     to_port     = 443
@@ -210,29 +190,20 @@ resource "aws_security_group" "ecs_service" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # RDS connectivity
   egress {
-    from_port = 5432
-    to_port   = 5432
-    protocol  = "tcp"
-    cidr_blocks = [
-      aws_subnet.private_a.cidr_block,
-      aws_subnet.private_b.cidr_block,
-    ]
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = [aws_subnet.private_a.cidr_block, aws_subnet.private_b.cidr_block]
   }
 
-  # NFS Port for EFS volumes
   egress {
-    from_port = 2049
-    to_port   = 2049
-    protocol  = "tcp"
-    cidr_blocks = [
-      aws_subnet.private_a.cidr_block,
-      aws_subnet.private_b.cidr_block,
-    ]
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = [aws_subnet.private_a.cidr_block, aws_subnet.private_b.cidr_block]
   }
 
-  # HTTP inbound access
   ingress {
     from_port       = 8000
     to_port         = 8000
@@ -241,6 +212,7 @@ resource "aws_security_group" "ecs_service" {
   }
 }
 
+# ECS Service
 resource "aws_ecs_service" "api" {
   name                   = "${local.prefix}-api"
   cluster                = aws_ecs_cluster.main.name
@@ -251,11 +223,7 @@ resource "aws_ecs_service" "api" {
   enable_execute_command = true
 
   network_configuration {
-    subnets = [
-      aws_subnet.private_a.id,
-      aws_subnet.private_b.id
-    ]
-
+    subnets         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
     security_groups = [aws_security_group.ecs_service.id]
   }
 
@@ -263,6 +231,5 @@ resource "aws_ecs_service" "api" {
     target_group_arn = aws_lb_target_group.api.arn
     container_name   = "proxy"
     container_port   = 8000
-
   }
 }
