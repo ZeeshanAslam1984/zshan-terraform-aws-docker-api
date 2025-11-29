@@ -3,11 +3,11 @@ server {
 
     # Static files
     location /static/static {
-        alias /vol/web/static/;
+        alias /vol/web/static;
     }
 
     location /static/media/ {
-        alias /vol/web/media/;
+        alias /vol/web/media;
     }
 
     # Proxy to Django app
